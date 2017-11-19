@@ -1,0 +1,248 @@
+
+
+	索引 
+		.常见索引
+			.聚集索引(clustered index:索引中键值的逻辑顺序决定了，表数据行的物理顺序)
+				.聚集索引优先选择列
+					. INT/BIGINT
+					. 数据连续(单调顺序)递增/自增
+				.不建议的聚集索引
+					. 修改频繁的列
+					. 新增数据太过离散随机的列
+			.主键索引(PRIMARY KEY)
+				.主键选择建议
+					.对业务透明，无意义，免受业务变化的影响
+					.主键很少修改和删除
+					.主键最好是自增的
+					.不要具有动态属性，例如最后修改时间戳
+				.InnoDB主键特点
+					.索引定义时，若不显示包含主键，会隐式加入主键值
+					.索引定义时，若显示包含主键，会加入主键值
+					.在5.6.9后，优化器异能自动识别索引末尾的主键(Idex Extensisons)，在之前需要显式加上主键列才可以别识别
+			.唯一索引(UNIQUE KEY)
+				.不允许具有索引值相同的行，从而禁止重复的索引或键值
+				.严格意义上讲，应该叫做唯一约束
+				.在唯一约束上，和主键一样(MySIAM引擎为代表)
+				.其他
+					.唯一索引允许有空值(NULL)
+					.一个表只能有一个唯一主键，但可以有多个唯一索引
+					.InnoDB表中主键必须是聚集索引，但聚集索引可能不是主键
+					.唯一索引约束可临时禁用，但主键不行
+			.联合索引(Combined Indexes,Multiple-Column Indexes)
+				.多列组成，所以也叫多列索引
+				.适合WHERE条件中的多列组合
+				.有时候，还可以用于避免回表(覆盖索引)
+				.MySQL还不支持多列不同排序规则
+				.联合索引建议
+					.WHERE条件中，经常同时出现的列放在联合索引中
+					.把选择性(过滤性/基数)最大列放在联合索引的最左边
+			.覆盖索引(covering indexes)
+				.通过索引数据结构，即可直接返回数据，不需要回表
+				.执行计划中，Extra列会显示关键字 using idex
+			.前缀索引(prefix indexes)
+				.部分索引的原因
+					.char/varchar太长全部做索引的话，效率太差，存才浪费
+					.或者blob/text类型不能整列作为索引列，因此需要使用前缀索引
+				.部分索引选择建议
+					.统计平均值
+					.遵循2/8原则
+				.缺点
+					.无法利用前缀索引完成排序
+			.外键索引(FOREIGN key Constraints)
+				.确保存储在外键表中的数据一致性，完整性
+				.外键前提:本表须于外键列类型形同(外键须是外表主键)
+				.外键选择原则:
+					.为关联字段创建外键
+					.所有的键都必须唯一
+					.避免使用符合键
+					.外键总是关联唯一的键字段
+			.全文索引(FULLTEXT)
+				. 5.6以前，FULLTEXT只支持MyISAM引擎
+				. 5.6以后，也可以支持InnoDB引擎
+				. 5.7以前，中文支持很差
+				. 优先使用Shpinx/Lucene/Solr等实现中问检索
+
+		.索引统计和利用
+			.索引管理
+				.创建/删除索引
+					.ALTER TABLE TABLE_NAME ADD INDEX IDX(c1) USING BTREE;
+					.CREATE INDEX IDX ON TABLE_NAME(c1) USING BTREE;
+					.CREATE TABLE 时可以顺便创建索引
+					.DROP INDEX IDX ON TABLE_NAME
+				.冗余索引
+					.根据最左匹配原则，一个索引是另一个索引的子集
+					.可以使用工具pt-duplicate-key-checher检查/schema_redundant_indesxes
+					 #pt-index-usage检查低利用率索引，提供删除建议/schema_unseed_indexes
+			.SQL使用索引
+				.SELECT ... FROM t WHERE 	#自动选择索引
+				.SELECT ... FROM t USE INDEX(IDX) WHERE  #建议使用的索引
+				.SELECT ... FROM t FORCE INDEX(IDX) WHERE 	#强制使用索引
+				.查看索引信息
+					.select * from information_schema.statistics where index_schema='index_name' and table_name='table_name';
+					.select * from mysql.innodb_index_stats where database_name='index_name' and table_name='table_name';
+		.索引特点
+			.MyISAM(数据页page存储)
+				.column value
+				.row number
+			.InnoDB
+				.索引的type
+					.0 普通索引
+					.1 主键索引
+					.2 唯一索引
+					.3 即是主键索引又是唯一索引(做了显示声明)
+				.主键索引(数据页page存储)
+					.Primary key column(col1)
+					.Transaction ID
+					.Rollback Pointer
+					.Non-PK column(col2)
+				.辅助索引(数据页page存储)
+					.Key columns(col2)
+					.Primary key columns(col1)
+			.InnoDB/MyISAM索引长度
+				.索引最长(默认)767bytes
+				.启用innodb_large_prefile,增加到3072bytes
+				.针对DYNAMIC、COMPRESSED格式
+				.对于REDUNDANT、COMPACT格式，最大索引长度还是767bytes
+				.MyISAM表索引最大长度是1000bytes
+				.索引最大排序默认是1024(max_sort_length)
+		.索引统计
+			.基本统计信息
+				.show table status;
+				.select * from information_schema.tables;
+				.select * from mysql.innodb_table_stats;
+			.索引统计信息
+				.show index from table_name;
+				.select * from information_schema.statistics;
+				.select * from mysql.innodb_index_stats;
+			.索引统计规则
+				.所有的普通索引在存储的时候都会加上主键索引信息(index extensions)
+				.统计索引信息的时候根据最左匹配原则，是需要统计各种组合的
+				.在mysql.inndb_index_stats表中存储统计信息的时候，是不会存储唯一索引的主键索引列的(普通索引才会存储主键索引信息，唯一索引是不会存储主键索引信息的)
+				.索引统计代价
+					.O(n_sample*(n_cols_in_uniq_i+n_cols_in_non_uniq_i+n_cols_in_pk*(1+n_non_uniq_i))*n_part)
+					.mysqladmin var |grep -i "sample" 		#sample 默认的采样数
+						#n_sample 采集的data page数量，默认值为20
+						#n_cols_in_uniq_i,所有唯一索引(不包含主键索引)中的列数
+						#n_cols_in_non_uniq_i,所有普通索引中的列总数
+						#n_cols_in_pk 主键索引中的列总数(若为显示定义主键，相当于只有一个列ROWID)
+						#n_non_uniq_i,非唯一索引
+						#n_part,表分区数量
+					.索引统计代价建议
+						.尽量少用表分区
+						.采样的page不要太大
+			.索引统计类型
+				.持久化统计(索引统计信息)
+					.innodb_stats_auto_recalc 		#默认启用，当修改数据量 >10%时，自动更新统计信息
+					.innodb_stats_persisent			#统计信息持久存储，默认启用
+					.innodb_stats_persisent_sample_pages 	#统计信息持久化存储时，每次采集20个page
+					.innodb_stats_on_metadata		#默认禁用，访问meta data时更新统计信息
+					.innodb_stats_method 			#控制信息针对索引中NULL值的算法
+				.动态统计
+					.innodb_stats_persistent=0	#统计信息不持久，每次动态采集，存储在内存中，重启失效(需重新统计)，不统计
+					.innodb_stats_transient_sample_pages	#动态采集page，默认8 个
+		.索引提高SQL效率和索引不可用
+			.索引如何提高SQL的效率
+				.提高数据检索效率
+				.提高聚合函数效率，sum()、avg()、count()
+				.提高排序效率，order by asc/desc
+				.有时候可以避免回表
+				.唯一、外键索引还可以作为辅助约束
+				.定义列DEFAULT NULL时，NULL值也会有索引，存放在索引树的前端部分，因此尽量不要定义允许NULL
+			.索引为何不可用
+				.通过索引扫描记录数超过30%，变成全表扫描
+				.联合索引中，第一个索引列使用范围查询(这时用到部分索引)
+				.联合索引中，第一个查询条件不是最左索引列
+				.模糊查询条件列最左统配符%开始
+				.HEAP表示用HASH索引时，使用范围检索或者ORDER BY 
+				.多表关联时，排序字段不数据驱动表，无法利用完成排序
+				.两个独立索引，其中一个用于检索，一个用于排序(只能用到一个)
+				.JOIN查询是，关联数据类型不一致也会导致索引不可用
+
+
+	事务/隔离级别/锁
+		.事务(Transaction是一组SQL组成的执行单元unit，是数据库并发控制和恢复回滚的基本单位；一个事务可能包含多个SQL，要么都失败，要么都成功)
+		.事务具备4个基本属性
+			.Atomic，同一个事务里，要么都提交，要么都回滚
+			.Consistentcy，即在事务开始之前和事务结束以后，数据库的完整性约束没有被破坏
+			.Isolation，并发事物间的数据时彼此隔离的
+			.Durabiliy，事务提交后，所有结果务必被持久化
+		.隔离级别
+			.Read Uncommitted (未提交读)	隔离级别最低,允许脏读，允许事务查看其他事务所进行的未提交更改
+			.Read Commited(已提交读) 允许幻读，允许事务查看其他事务所进行的已提交更改 	#(间隙锁-Gap Lock)解决了幻读问题
+			.Read Repeateble(可重复读) 消除了脏读，不可重复读，幻读，保证事务一致性；确保每个事务的读取结果总是一样，默认隔离级别
+			.Serializable(串行) 隔离级别最高 串行化读，每次读都需要获取表及共享锁，读写相互都会阻塞
+		.InnoDB锁
+			.S 共享锁
+				.共享锁，不允许其他事务修改锁定的行，只能读
+				.SELECT ... LOCK IN SHARE MODE
+				.自动提交模式下的普通SELECT是一致非锁定读，不加锁
+			.X 排他锁
+				.对一行记录进行DML时，需要至少加上拍它锁
+				.锁范围视情况而定，可能是record lock(记录锁)、net-key lock(gap lock + record lock)，或者可能只有gap lock
+				.执行DML，或SELECT ... FOR UPDATE
+			.意向锁
+				.IS 事务T想要获得表中某几行的共享锁
+				.IX 事务T想要获得表中某几行的排他锁
+				 #意向锁是加载在数据表B+树结构的根节点上，也就是对整个表加意向锁
+				 #意向锁的作用:避免在执行DML时，对表执行DDL操作，导致数据不一致
+			.InnoDB行锁
+				.主键索引是record lock
+				.唯一辅助索引是 record lock
+				.普通辅助索引是 next-key lock
+				.没有索引的话，则是全表范围next-key lock
+				.RC 下，只有record lock
+				.RR & innodb_locks_unsafe_for_binlog = 1，只有record lock
+
+				.LOCK_REC_NOT_GAP 	#Record Lock，单个记录上的锁
+				.LOCK_GAP 			#间隙所，锁定一个范围，单不包含记录本身
+				.LOCK_ORDINARY		#锁定一个范围和本身 Record Lock + Gap Lock
+				.LOCK_INSERT_INTEN TION #意向插入锁，是GAP Lock的一种
+			.InnoDB锁特点
+				.显示锁(expliclit-lock)
+				.隐式锁(implicit-lock)
+				.innodb锁之insertion intention lock
+				.一致性非锁定读
+			.死锁
+				.如果多个事务都需要访问数据，而另一个事务已经以互斥方式锁定该数据，则会发生死锁
+				.事务A等待事务B，同时事务A，会产生死锁
+				.InnoDB死锁检测进程，如果检测到死锁，会马上跑出异常回滚一个事务(另一个事务继续执行)
+			.InnoDB锁优化
+				.尽可能让所有的数据检索都通过索引来完成，从而避免InnoDB因为无法通过索引键加载锁升级(全表所有行)锁定
+				.合理设计索引，让InnoDB在索引上面加锁的时候尽可能准确，尽可能的锁定范围，避免造成不必要的锁定而影响其他Query的执行
+				.尽可能减少范围数据检索过滤条件，降低过多的数据被加上next-key lock
+				.多使用PRIMARY KEY或UNIQUE KEY
+
+			.查看InnoDB锁:
+				.innodb_row_lock_current_waits 		#当前等待的行锁数量
+				.innodb_rowk_lock_time		#请求行锁总耗时(ms)
+				.innodb_row_lock_time_avg 	#请求锁平均耗时(ms)
+				.innodb_row_lock_time_max 	#请求行锁最久耗时(ms)
+				.innodb_row_lock_waits 		#行锁发生次数
+			.锁优化
+				.避免myisam，改用innodb
+				.创建合适的索引，尽量不要使用多个索引
+				.避免大事务，长事务
+				.在业务非低峰DDL操作
+				.执行DDL前，先判断是否有长SQL，未提交事务，及其他的lock waits事件
+				 #执行DDL或mysqldump备份时，需要看看线上数据库是否存在有大事务长SQL未提交，和lock waits等等，避免操作时发生数据卡死
+
+	InnoDB引擎	
+		.存储结构
+			.系统表空间
+			.独立表空间
+			.日志文件
+			.通用表空间
+			.临时表空间
+			.undo表空间，undo tablespace
+		.InnoDB是聚集索引组织表
+			.基于B+树
+			.数据以聚集索引(clustered index)逻辑顺序存储
+			.聚集索引优先选择显式定义的主键
+				.其次选择第一个非NULL的唯一索引
+				.再次使用隐藏ROWID
+				.聚集索引叶子点存储整行数据
+			.普通索引同时存储主键索引键值
+			.所有的索引都由2个segment组成
+				.Leaf Page Segment
+				.Non-Leaf Page Segment
+				
