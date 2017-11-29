@@ -10,49 +10,52 @@ source /etc/profile
 
 DBIP=`ifconfig  eth0|grep "inet"|awk -F ' ' 'NR==1{print $2}'`
 DBPORT=3306
-DBUSER='sysbench'
-DBPASSWD='sysbench123'
+DBUSER='test'
+DBPASSWD='test123'
 NOW=`date +'%Y:%m:%d:%H:%M'`
-DBNAME="sbtest"
+DBNAME="sysbench"
 TBLCNT=50
 WARMUP=300
 DURING=900
-ROWS=20000000
+ROWS=10000000
 MAXREQ=20000000
-LUA=/mysql/lua/oltp.lua
-SYSBSE="/mysql/sysbench/logs"
+LUA=/usr/local/share/sysbench/oltp_read_write.lua
+SYSLOG="/mysql/sysbench/logs"
 
 # 并发压测的线程数，根据机器配置实际情况进行调整
 RUN_NUMBER="8 64 128 256 512 768 1024 1664 2048 4096"
 
-if [ ! -d $SYSBSE ];then
-	mkdir -pv ${SYSBSE}
+if [ ! -d $SYSLOG ];then
+	mkdir -pv ${SYSLOG}
 else
-	echo -e "\033[32m ${SYSBSE} Directory Exists \033[0m" 		
-fi 
+	echo -e "\033[32m ${SYSLOG} Directory Exists \033[0m" 		
+fi
+
 
 
 prepare() {
-echo -e "\033[32m SYSBENCH 创建测试数据 \033[0m"  &&
-/usr/bin/sysbench  --mysql-host=$DBIP --mysql-port=$DBPORT --mysql-user=$DBUSER --mysql-password=$DBPASSWD --test=$LUA --oltp_tables_count=10 --oltp-table-size=100000 --rand-init=on prepare >> ${SYSBSE}/sysbench_prepare_${NOW}.log
-}
+echo -e "\033[32m SYSBENCH 创建测试数据 \033[0m"  && 
+/usr/bin/sysbench  --test=${LUA}  --mysql-user=${DBUSER} --mysql-password=${DBPASSWD} --mysql-port=${DBPORT}  --mysql-host=${DBIP}  --mysql-db=${DBNAME} --tables=10 --table-size=${ROWS} --threads=32 --events=5000000 --report-interval=5 prepare >> ${SYSLOG}/sysbench_prepare_${NOW}.log
+} 
 
 
 
 sysbench() {
 echo -e "\033[32m SYSBENCH 进行数据测试 \033[0m"  &&
 # 一般至少跑3轮测试，我正常都会跑10轮以上
+
+round=1
 while [ $round -lt 4 ]
 do
 
-round=1
 rounddir=logs-round${round}
-mkdir -p ${rounddir}
+mkdir -p ${SYSLOG}/${rounddir}
 
 for thread in `echo "${RUN_NUMBER}"`
 do
+ 
+/usr/bin/sysbench  --test=${LUA} --mysql-user=${DBUSER} --mysql-port=${DBPORT} --mysql-password=${DBPASSWD} --mysql-host=${DBIP} --mysql-db=${DBNAME} --tables=10 --table-size=${ROWS} --threads=${thread}  --report-interval=5 --time=${DURING} --percentile=99 run  >> ${SYSLOG}/${rounddir}/sbtest_${thread}_${NOW}.log
 
-/usr/bin/sysbench --test=$LUA --db-driver=mysql --mysql-host=$DBIP --mysql-port=$DBPORT --mysql-user=$DBUSER --mysql-password=$DBPASSWD --oltp-table-size=${ROWS} --rand-init=on --threads=${thread} --oltp-read-only=off --report-interval=1 --rand-type=uniform --max-time=${DURING} --max-requests=0 --percentile=99 run >> ${SYSBSE}/${rounddir}/sbtest_${thread}_${NOW}.log
 
 sleep 300
 done
@@ -64,8 +67,9 @@ done
 
 
 cleanup() {
-/usr/bin/sysbench  --mysql-host=$DBIP --mysql-port=$DBPORT --mysql-user=$DBUSER --mysql-password=$DBPASSWD --test=$LUA --oltp_tables_count=10 --oltp-table-size=100000 --rand-init=on cleanup >> ./sysbench_cleanup_${NOW}.log
-}
+echo -e "\033[32m SYSBENCH 清除测试数据 \033[0m"  &&
+ /usr/bin/sysbench  --test=${LUA}  --mysql-user=${DBUSER} --mysql-password=${DBPASSWD} --mysql-port=${DBPORT}  --mysql-host=${DBIP}  --mysql-db=${DBNAME} --tables=10 --table-size=${ROWS} --threads=32 --events=5000000 --report-interval=5 cleanup >> ${SYSLOG}/sysbench_cleanup_${NOW}.log
+} 
 
 
 case "$1" in

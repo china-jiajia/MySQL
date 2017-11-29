@@ -6,8 +6,7 @@ DATABASE=tpcc
 USER=tpcc
 PASSWORD=tpcc123
 NOW=`date +'%Y%m%d%H%M'`
-TPCCBSE="/mysql/tpcc/logs" 
-
+TPCCBSE="/mysql/tpcc-mysql/logs" 
 
 if [ ! -d $TPCCBSE ];then
         mkdir -pv ${TPCCBSE}
@@ -15,15 +14,17 @@ else
         echo -e "\033[32m ${TPCCBSE} Directory Exists \033[0m"           
 fi 
 
+cd /mysql/tpcc-mysql
+
 
 tpload(){
 echo -e "\033[32m TPCC-LOAD 创建测试数据 \033[0m"  &&
-/mysql/tpcc-mysql/tpcc_load  ${IP} ${DATABASE} ${USER} ${PASSWORD} 300 >> ${TPCCBSE}/tpcc_load_${NOW}.log
+./tpcc_load  ${IP} ${DATABASE} ${USER} ${PASSWORD} 200 >> ${TPCCBSE}/tpcc_load_${NOW}.log
 }
 
 tpstart(){
 echo -e "\033[32m TPCC-START 进行数据测试 \033[0m"  &&
-/mysql/tpcc-mysql/tpcc_start -h ${IP} -d ${DATABASE} -u ${USER}  -p ${PASSWORD} -w 200 -c 12 -r 300 -l 1800 -f ${TPCCBSE}/tpcc_mysql_${NOW}.log >> ${TPCCBSE}/tpcc_caseX_${NOW}.log 2>&1
+./tpcc_start -h ${IP} -d ${DATABASE} -u ${USER}  -p ${PASSWORD} -w 200 -c 12 -r 300 -l 1800 -f ${TPCCBSE}/tpcc_mysql_${NOW}.log >> ${TPCCBSE}/tpcc_caseX_${NOW}.log 2>&1
 }
 
 
