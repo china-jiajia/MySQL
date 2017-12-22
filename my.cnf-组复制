@@ -1,0 +1,142 @@
+[client]
+port            = 3306
+socket          = /tmp/mysql3306.sock
+
+[mysql]
+prompt="\u@\h [\d]>"
+no-auto-rehash
+
+[mysqld]
+user = mysql
+basedir = /usr/local/mysql
+datadir = /data/mysql/mysql3306/data
+socket = /tmp/mysql3306.sock
+tmpdir = /data/mysql/mysql3306/tmp
+port = 3306
+server-id = 123306
+#skip-name-resolve
+event_scheduler = 0 			
+character-set-server = utf8
+secure_file_priv="/tmp" 		
+
+#------------MySQL Log----------------#
+log-output=file 				
+log-error = /data/mysql/mysql3306/logs/error.log
+log_warnings = 2 				
+
+#------------session variables-------#
+thread_stack = 192K 			
+sort_buffer_size = 128K			
+max_length_for_sort_data = 2048 	
+join_buffer_size = 128K			
+thread_cache_size = 200			
+
+#-------------------gobal variables------------#
+interactive_timeout = 300 		
+wait_timeout = 300				
+open_files_limit = 65535
+max_connections = 100
+max_connect_errors = 100000
+lower_case_table_names =1 		
+pid-file = mysql.pid
+table_open_cache = 2048 		
+table_definition_cache = 2048	
+table_open_cache = 2048
+max_heap_table_size = 96M		
+tmp_table_size = 96M			
+query_cache_size = 0			
+query_cache_type = 0			
+query_cache_limit = 256K		
+query_cache_min_res_unit = 512	
+key_buffer_size = 8M 			
+read_buffer_size = 2M 			
+read_rnd_buffer_size = 16M		
+bulk_insert_buffer_size = 32M 	
+
+
+#------------Slow Log----------------#
+slow_query_log = 1
+slow_query_log_file = slow.log
+long_query_time = 1
+log-slow-slave-statements = 1 	
+log_queries_not_using_indexes = 1 		
+
+#------------BinLog----------------#
+binlog_format = row
+log-bin = /data/mysql/mysql3306/logs/mysql-bin
+max_binlog_size = 256M
+sync_binlog = 0
+expire_logs_days = 10
+log_bin_trust_function_creators = 1   
+
+#------------GTID----------------#
+gtid-mode = on
+enforce-gtid-consistency=1			
+skip_slave_start = 1			
+
+#---------------relay log--------------#
+max_relay_log_size = 128M		
+relay_log_purge = 1 			
+relay_log_recovery = 1			
+relay-log=relay-bin
+relay-log-index=relay-bin.index
+log_slave_updates = 1 			
+
+#----------------MyISAM----------------#
+myisam_sort_buffer_size = 128M 		
+myisam_max_sort_file_size = 10G
+myisam_repair_threads = 1
+
+#----------------InnoDB----------------#
+innodb_buffer_pool_size = 100M
+innodb_buffer_pool_instances = 1 		
+innodb_data_file_path = ibdata1:100M:autoextend
+innodb_flush_log_at_trx_commit = 2 		
+innodb_log_buffer_size = 8M
+innodb_log_file_size = 100M
+innodb_log_files_in_group = 3
+innodb_max_dirty_pages_pct = 50
+innodb_file_per_table = 1 
+innodb_rollback_on_timeout 
+innodb_io_capacity = 2000 
+transaction_isolation = READ-COMMITTED 
+innodb_flush_method = O_DIRECT
+
+
+#---------------------audit LOG---------------------#
+#server_audit_events='CONNECT,QUERY,TABLE,QUERY_DDL,QUERY_DML,QUERY_DCL'
+#server_audit_logging=on
+#server_audit_file_path =/data/mysql/mysql3306/logs/
+#server_audit_file_rotate_size=200000000
+#server_audit_file_rotations=200
+#server_audit_file_rotate_now=ON
+
+
+#------------------MGR NEED-----------------------#
+master_info_repository=TABLE
+relay_log_info_repository=TABLE
+binlog_checksum=NONE
+report_host=172.26.0.12
+report_port=3306
+
+#------------------MySQL Parallel REPL-----------------------#
+slave-parallel-type=LOGICAL_CLOCK
+slave-parallel-workers=4
+slave_preserve_commit_order=ON
+
+#------------------MGR-----------------------#
+transaction_write_set_extraction=XXHASH64
+
+#组名，以UUID标识，如果部署多套MGR集群，组名的uuid需要区分
+loose-group_replication_group_name="c8734a84-ca8c-493d-8655-9f929a845dcd"
+loose-group_replication_start_on_boot=off
+loose-group_replication_local_address= "172.26.0.12:24901"
+loose-group_replication_group_seeds=  "172.26.0.17:24901,172.26.0.4:24901,172.26.0.12:24901"
+loose-group_replication_bootstrap_group= off
+
+#是否启用事务一致性检查，多主模式请使用on(打开)，单主模式请使用off（关闭）
+loose-group_replication_enforce_update_everywhere_checks =  on
+
+#是否启用单主模式（单主为on 多主为off）
+loose-group_replication_single_primary_mode = off
+
