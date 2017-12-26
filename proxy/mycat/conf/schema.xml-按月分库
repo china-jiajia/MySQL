@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+	<schema name="TESTDB" checkSQLschema="false" sqlMaxLimit="100">
+		<table name="orders" primaryKey="oid"  dataNode="dn$1-12" rule="myorders-by-month" />
+	</schema>
+
+	<dataNode name="dn1" dataHost="localhost1" database="mdb" />
+	<dataNode name="dn2" dataHost="localhost1" database="mdb" />
+	<dataNode name="dn3" dataHost="localhost1" database="mdb" />
+	<dataNode name="dn4" dataHost="localhost1" database="mdb" />
+	<dataNode name="dn5" dataHost="localhost2" database="gdb" />
+	<dataNode name="dn6" dataHost="localhost2" database="gdb" />
+	<dataNode name="dn7" dataHost="localhost2" database="gdb" />
+	<dataNode name="dn8" dataHost="localhost2" database="gdb" />
+	<dataNode name="dn9" dataHost="localhost3" database="odb" />
+	<dataNode name="dn10" dataHost="localhost3" database="odb" />
+	<dataNode name="dn11" dataHost="localhost3" database="odb" />
+	<dataNode name="dn12" dataHost="localhost3" database="odb" />
+
+	<dataHost name="localhost1" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+		<heartbeat>select user()</heartbeat>
+		<writeHost host="hostM1" url="192.168.2.9:3306" user="root" password="111111">
+	</writeHost>
+	</dataHost>
+
+	<dataHost name="localhost2" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+		<heartbeat>select user()</heartbeat>
+		<writeHost host="hostM2" url="192.168.2.10:3306" user="root" password="111111">
+	</writeHost>
+	</dataHost>
+
+
+	<dataHost name="localhost3" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+		<heartbeat>select user()</heartbeat>
+		<writeHost host="hostM3" url="192.168.2.20:3306" user="root" password="111111">
+	</writeHost>
+	</dataHost>
+</mycat:schema>
+
