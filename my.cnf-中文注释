@@ -131,28 +131,69 @@ innodb_flush_method = O_DIRECT
 
 #------------------PXC-----------------------------#
 #default_storage_engine=Innodb
+
+定义Galera复制插件的路径
 #wsrep_provider = /usr/local/mysql/lib/libgalera_smm.so   
+
+定义节点在连接到集群时使用的后端架构，IP地址，端口和选项
 #wsrep_cluster_address = gcomm://172.26.0.17,172.26.0.20,172.26.0.4   
+
+定义节点为自己使用的逻辑名称
 #wsrep_node_name = servcie04
+
+定义节点的IP地址和端口
 #wsrep_node_address = 172.26.0.20
+
+定义节点的逻辑集群名称
 #wsrep_cluster_name = pxc_sampson    
+
+定义在状态快照传输中使用的身份验证信息
 #wsrep_sst_auth = sst:123456    
+
+定义节点在状态快照传输中使用的方法或脚本
 #wsrep_sst_method = xtrabackup-v2    
+
+定义在应用从属写入集时使用的线程数
 #wsrep_slave_threads = 2    
+
+控制PXC严格模式，该模式运行验证，以避免在Percona XtraDB集群中使用实验性和不受支持的功能
 #pxc_strict_mode = ENFORCING     
+
+用于生成自动递增值的锁定模式必须交错， 以确保每个节点生成唯一的（但是不连续的）标识符
 #innodb_autoinc_lock_mode = 2     
+
+定义节点传递给wsrep Provider的可选设置
 #wsrep_provider_options = "debug=1;gcache.size=1G" 
 
 
 #-------------------group_replication--------------#
+group_replication插件开启配置
 #plugin-load=group_replication
+
+记录事务的算法
 #transaction_write_set_extraction = XXHASH64
+
+此GROUP的名字,必须是一个有效的UUID,以此来区分整个网里边的各个不同的GROUP
 #loose-group_replication_group_name = '9ac06b4e-13aa-11e7-a62e-5254004347f9'
+
+IP地址白名单设置
 #loose-group_replication_ip_whitelist = '127.0.0.1/8,172.26.0.0/20'
+
+是否随服务器启动而自动启动组复制
 #loose-group_replication_start_on_boot = OFF
+
+
+本地的IP地址字符串,host:port
 #loose-group_replication_local_address = '172.26.0.20:24201'
+
+需要接受本实例的信息服务器IP地址字符串
 #loose-group_replication_group_seeds = '172.26.0.17:24201,172.26.0.20:24202,172.26.0.4:24401'
+
+引导组成员的组，这个用于第一次搭建MGR跟重新搭建MGR的时候使用
 #loose-group_replication_bootstrap_group = OFF
-#loose-group_replication_single_primary_mode = OFF
-#loose-group_replication_single_primary_mode = true
+
+是否启动单主模式，如果启动，则本实例是主库，提供读写，其他实例仅提供读
+#loose-group_replication_single_primary_mode = {OFF|TRUE}
+
+多主模式下强制检查每一个实例是否允许该操作
 #loose-group_replication_enforce_update_everywhere_checks = false
