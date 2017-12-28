@@ -121,11 +121,22 @@ innodb_flush_method = O_DIRECT
 
 
 #---------------------audit LOG---------------------#
+指定记录事件的类型，可以用逗号分隔的多个值(connect,query,table)，如果开启了查询缓存(query cache)，查询直接从查询缓存返回数据，将没有table记录
 #server_audit_events='CONNECT,QUERY,TABLE,QUERY_DDL,QUERY_DML,QUERY_DCL'
+
+启动或关闭审计
 #server_audit_logging=on
+
+如server_audit_output_type为FILE，使用该变量设置存储日志的文件，可以指定目录，默认存放在数据目录的server_audit.log文件中
 #server_audit_file_path =/data/mysql/mysql3306/logs/
+
+限制日志文件的大小
 #server_audit_file_rotate_size=200000000
+
+指定日志文件的数量，如果为0日志将从不轮转
 #server_audit_file_rotations=200
+
+强制日志文件轮转
 #server_audit_file_rotate_now=ON
 
 
