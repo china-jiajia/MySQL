@@ -1,0 +1,41 @@
+
+
+
+innodb_buffer_pool_dump_at_shutdown 		#在MySQL关闭时把热数据dump到本地磁盘
+innodb_buffer_pool_dump_now					#采用手工方式把热数据dump到本地磁盘
+innodb_buffer_pool_load_abort 				#终止Buffer Pool恢复,可以指定负载运行
+innodb_buffer_pool_load_at_startup			#在MySQL启动时把热数据加载到内存
+innodb_buffer_pool_load_now 				#采用手工方式把热数据加载到内存
+
+	1.在关闭MySQL时,会把内存中的热数据保存在磁盘里ib_buffer_pool文件中,位于数据目录下(开启genernal_log进行调试查看日志信息)
+	2.在启动后，会自动加载热数据到Buffer_Pool缓冲池里。(开启genernal_log进行调试查看日志信息)
+	注：只有在正常关闭MySQL服务，或者pkill mysql时，会把热数据dump到内存。机器宕机或者pkill -9 mysql，是不会dump。
+
+
+bulk_insert_buffer_size 					#批量插入的缓存
+innodb_buffer_pool_filename					#ib_buffer_pool 指定热数据文件名字
+innodb_buffer_pool_instances				#设定buffer_pool实例个数
+innodb_buffer_pool_size						#设定指定热数据缓冲的大小(ib_buffer_pool)
+innodb_change_buffer_max_size				#表示change buffer在buffer pool中的最大占比，默认25%，最大50%
+innodb_change_buffering 		#表示索引列merge对象,all表示对IDU索引列都起作用,都进行merge,如果只想对insert索引列进行merge,就把all改为inserts。
+innodb_log_buffer_size 			#日志缓冲区大小（这项配置决定了为尚未执行的事务分配的缓存。其默认值（1MB）一般来说已经够用了，但是如果你的事务中包含有二进制大对象或者大文本字段的话，这点缓存很快就会被填满并触发额外的I/O操作。看看Innodb_log_waits状态变量，如果它不是0，增加innodb_log_buffer_size)
+
+	.innodb_log_file_size：单个日志文件大小(这是redo日志的大小)
+	.Innodb_log_files_in_group：日志文件的个数
+
+	.Innodb_log_buffer_size：日志缓冲区大小
+	.Innodb_flush_log_at_trx_commit：日志刷新的频率
+
+innodb_sort_buffer_size
+join_buffer_size 				#联合查询操作所能使用的缓冲区大小，和sort_buffer_size一样，该参数对应的分配内存也是每连接独享
+key_buffer_size 				#指定索引缓冲区的大小，它决定索引处理的速度，尤其是索引读的速度
+preload_buffer_size 			#重载索引时分配的缓冲区大小，该变量仅支持MyISAM.
+read_buffer_size 				#MySQL读入缓冲区大小.对表进行顺序扫描的请求将分配一个读入缓冲区，MySQL会为它分配一段内存缓冲区。
+								read_buffer_size变量控制这一缓冲区的大小
+read_rnd_buffer_size			#MySQL的随机读缓冲区大小。当按任意顺序读取行时(例如，按照排序顺序)，将分配一个随机读缓存区。进行排序查询时
+sort_buffer_size 				#是一个connection级参数，在每个connection第一次需要使用这个buffer的时候，一次性分配设置的内存。
+myisam_sort_buffer_size
+sql_buffer_result 				#意思是说，在查询语句中，将查询结果缓存到临时表中。
+
+max_allowed_packet = 16M		#接受的数据包大小；增加该变量的值十分安全，这是因为仅当需要时才会分配额外内存。
+
